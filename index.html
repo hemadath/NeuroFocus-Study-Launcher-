@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AstroMindAI - Focus Timer Engine</title>
+    <style>
+        :root {
+            --bg-color: #05050f;
+            --accent-glow: #00f0ff;
+            --premium-glow: #ff007f;
+            --card-bg: rgba(255, 255, 255, 0.05);
+        }
+        
+        body {
+            margin: 0;
+            padding: 0;
+            background: var(--bg-color);
+            color: #fff;
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            transition: background 0.5s ease;
+        }
+
+        .stars { position: absolute; width: 100%; height: 100%; z-index: 1; opacity: 0.15; pointer-events: none; }
+        .glow-bg {
+            position: absolute;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(0,240,255,0.12) 0%, rgba(0,0,0,0) 70%);
+            top: 10%;
+            z-index: 1;
+            pointer-events: none;
+            transition: all 1s ease;
+        }
+
+        .container {
+            position: relative;
+            z-index: 2;
+            width: 100%;
+            max-width: 450px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            padding: 16px;
+            box-sizing: border-box;
+        }
+
+        .header { text-align: center; margin-bottom: 10px; }
+        .header h1 {
+            font-size: 24px;
+            margin: 0;
+            letter-spacing: 2px;
+            background: linear-gradient(45deg, #00f0ff, #7000ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .header p { font-size: 11px; color: #666; margin: 3px 0 0 0; text-transform: uppercase; }
+
+        /* TIME-BOUND FIREWALL CONTROL LAYER */
+        .focus-banner {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 14px;
+            margin-bottom: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .controls-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .timer-display {
+            font-size: 22px;
+            font-weight: bold;
+            font-family: monospace;
+            color: var(--accent-glow);
+            letter-spacing: 1px;
+        }
+        select {
+            background: #111;
+            color: #fff;
+            border: 1px solid #333;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 13px;
+        }
+        .orb-toggle-btn {
+            background: #111;
+            border: 2px solid #1a1a3a;
+            color: #fff;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 12px;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(0, 240, 255, 0.1);
+            transition: all 0.3s;
+        }
+
+        /* WORKSPACE DISPLAY CARD LAYER */
+        .answer-box { 
+            flex: 1.5; 
+            background: rgba(255,255,255,0.06); 
+            border-radius: 12px; 
+            padding: 12px; 
+            margin-bottom: 12px; 
+            border: 1px solid rgba(255,255,255,0.08); 
+            overflow-y: auto; 
+            font-size: 13px;
+            line-height: 1.4;
+        }
+        .split-view { flex: 3; display: flex; gap: 12px; margin-bottom: 12px; }
+        .image-card { 
+            flex: 1.2; 
+            background: #111; 
+            border-radius: 12px; 
+            border: 1px solid rgba(255,255,255,0.1); 
+            background-image: url('https://unsplash.com'); 
+            background-size: cover; 
+            background-position: center; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            font-size: 11px; 
+            color: #556; 
+        }
+        .explanation-card { 
+            flex: 1; 
+            background: rgba(255,255,255,0.04); 
+            border-radius: 12px; 
+            padding: 12px; 
+            font-size: 12px; 
+            overflow-y: auto; 
+            line-height: 1.4; 
+            border: 1px solid rgba(255,255,255,0.03); 
+        }
+
+        /* Inputs */
+        .input-area { display: flex; gap: 8px; margin-bottom: 12px; }
+        input { flex: 1; padding: 10px 16px; border-radius: 20px; border: 1px solid #222; background: #111; color: #fff; font-size: 14px; }
+        .send-btn { padding: 0 20px; border-radius: 20px; border: none; background: #0070f3; color: #fff; font-weight: bold; cursor: pointer; font-size: 13px; }
+
+        /* AUDIO SYSTEM */
+        .premium-audio-bar {
+            background: linear-gradient(90deg, rgba(255,0,127,0.08) 0%, rgba(112,0,255,0.08) 100%);
+            border-radius: 12px;
+            padding: 10px 14px;
+            border: 1px solid rgba(255, 0, 127, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 12px;
+        }
+        .play-btn { background: var(--premium-glow); border: none; width: 32px; height: 32px; border-radius: 50%; color: white; font-weight: bold; cursor: pointer; }
+
+        /* FLOATING AVATAR LAYER OVERLAY */
+        #robo-avatar { position: absolute; z-index: 99; left: 55%; top: 25%; transition: all 1s cubic-bezier(0.25, 1, 0.5, 1); text-align: center; }
+        .speech-bubble { background: #0056b3; padding: 6px 10px; border-radius: 8px; font-size: 10px; max-width: 120px; margin-bottom: 4px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); font-weight: bold; }
+        .robot-body { font-size: 48px; cursor: pointer; animation: breathe 3s ease-in-out infinite; }
+        @keyframes breathe { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+
+        /* ACTIVE UI CONFIGURATION */
+        body.focus-active { --bg-color: #020206; }
+        body.focus-active .glow-bg { background: radial-gradient(circle, rgba(255,0,50,0.15) 0%, rgba(0,0,0,0) 70%); }
+        body.focus-active .orb-toggle-btn { border-color: #ff3333; color: #ff3333; box-shadow: 0 0 15px rgba(255, 51, 51, 0.3); background: #0c0202; }
+        body.focus-active .timer-display { color: #ff3333; }
+    </style>
+</head>
+<body>
+
+    <div class="glow-bg" id="ambient-glow"></div>
+    <div class="stars">🌐 * * * 🧠 * * * 🌐</div>
+    
+    <div class="container">
+        <div class="header">
+            <h1>AstroMindAI</h1>
+            <p>Timed Isolation Launcher</p>
+        </div>
+
+        <!-- 1. TIMED FOCUS SYSTEM CONFIGURATION -->
+        <div class="focus-banner">
+            <div class="controls-row">
+                <div>
+                    <div style="font-size: 13px; font-weight: bold;" id="focus-title">Firewall Engine: Standby</div>
+                    <div style="font-size: 11px; color: #777; margin-top: 2px;" id="focus-sub">Select duration parameters</div>
+                </div>
+                <div class="timer-display" id="clock-view">20:00</div>
+            </div>
+            <div class="controls-row">
+                <select id="time-selector">
+                    <option value="1">1 Minute (Test Mode)</option>
+                    <option value="10">10 Minutes</option>
+                    <option value="20" selected>20 Minutes</option>
+                    <option value="45">45 Minutes</option>
+                    <option value="60">60 Minutes</option>
+                </select>
+                <button class="orb-toggle-btn" id="focus-toggle" onclick="handleFocusToggle()">START LOCKDOWN</button>
+            </div>
+        </div>
+        
+        <!-- 2. OMNI INTERACTIVE GRAPHICS WORKSPACE -->
+        <div class="answer-box" id="ai-chat">
+            Welcome back! Select your session length above and lock down the environment to block outbound traffic routes automatically.
+        </div>
+        
+        <div class="split-view">
+            <div class="image-card" id="img-target">Awaiting Target Focus...</div>
+            <div class="explanation-card" id="ai-explain">System data parameters process here.</div>
+        </div>
+        
+        <!-- 3. ENTRY INPUT -->
+        <div class="input-area">
+            <input type="text" id="msg-input" placeholder="Enter study topic context...">
+            <button class="send-btn" onclick="executeOmniQuery()">Launch</button>
+        </div>
+
+        <!-- 4. PREMIUM AUDIO CONTROL PANEL -->
+        <div class="premium-audio-bar">
+            <div style="flex: 1; padding-right: 10px;">
+                <b style="color: var(--premium-glow)">⚡ Gamma Synchronization Wave</b><br>
+                <span style="color: #aaa; font-size: 11px;" id="audio-info">Trigger sound engines to optimize informational tracking velocity.</span>
+            </div>
+            <button class="play-btn" onclick="toggleCognitiveAudio()" id="audio-btn">▶</button>
+        </div>
+    </div>
+
+    <!-- 5. FLOATING AVATAR CHARACTER COMPONENT -->
+    <div id="robo-avatar">
+        <div class="speech-bubble" id="robo-speech">Core Ready!</div>
+        <div class="robot-body">🤖</div>
+    </div>
+
+    <script>
+        let isFocusActive = false;
+        let isAudioPlaying = false;
+        let audioCtx = null;
+        let oscillator = null;
+        let countdownTimer = null;
+        let totalSecondsRemaining = 0;
+
+        function stopVoice() { window.speechSynthesis.cancel(); }
+        function robotSpeak(text) {
+            stopVoice();
+            let utterance = new SpeechSynthesisUtterance(text.substring(0, 180));
+            window.speechSynthesis.speak(utterance);
+        }
+
+        // Updates the text display to follow standard mm:ss notation
+  
